@@ -141,6 +141,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:12px}
 kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
 @media (max-width:420px){.bpm{font-size:80px}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.pat{padding:9px 6px 7px}}
 @media (prefers-reduced-motion:reduce){.bar,.tog::after,.prog i,.beatwrap{transition:none}}
+.diag{margin:12px 0 0;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;user-select:text;-webkit-user-select:text}
+.diag .ok{color:var(--accent);font-weight:600}.diag .bad{color:var(--down);font-weight:600}
 </style>
 </head>
 <body>
@@ -250,6 +252,12 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
       <button class="btn" type="submit">儲存</button>
     </form>
     <div class="plist" id="plist"></div>
+  </section>
+
+  <section class="panel">
+    <div class="switch"><div><h2>測試聲音</h2><p>沒有聲音時按這裡，依序播放兩種測試音並顯示狀態</p></div></div>
+    <div class="saverow"><button class="btn" id="diagBtn" type="button" style="flex:1">開始測試</button><button class="btn" id="diagCopy" type="button" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">複製結果</button></div>
+    <pre class="diag" id="diagOut">尚未測試　·　版本 v3</pre>
   </section>
 
   <div class="keys"><kbd>Space</kbd> 開始/停止　<kbd>T</kbd> Tap　<kbd>↑</kbd><kbd>↓</kbd> ±1　<kbd>←</kbd><kbd>→</kbd> ±5</div>
@@ -485,6 +493,46 @@ document.addEventListener('visibilitychange',()=>{
     if(running){setTimeout(()=>{if(ctx.state==='running'){nextTime=ctx.currentTime+.06;queue=[];}},50);}}if(running&&document.visibilityState==='visible'&&navigator.wakeLock&&!wake){navigator.wakeLock.request('screen').then(w=>wake=w).catch(()=>{});}});
 
 if(!Array.isArray(S.accents)||S.accents.length!==S.beats)S.accents=defaultAccents(S.beats,S.den);
+/* ---------- sound test ---------- */
+function toneWav(freq,sec){const sr=22050,n=Math.floor(sr*sec),buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const env=Math.min(1,i/200,(n-i)/2000);v.setInt16(44+i*2,Math.sin(2*Math.PI*freq*i/sr)*env*0.6*32767,true);}
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let diagText='';
+async function runDiag(){
+  const out=$('diagOut'),lines=[];const put=(k,v,cls)=>{lines.push([k,v,cls]);
+    out.innerHTML=lines.map(([a,b,c])=>a+'：'+(c?'<span class="'+c+'">'+b+'</span>':b)).join('\n');
+    diagText=lines.map(([a,b])=>a+'：'+b).join('\n');};
+  $('diagBtn').disabled=true;out.textContent='測試中…';lines.length=0;
+  put('版本','v3');
+  put('瀏覽器',(navigator.userAgentData&&navigator.userAgentData.brands?navigator.userAgentData.brands.map(b=>b.brand+' '+b.version).filter(s=>!/Not/.test(s)).join(', '):'')||navigator.userAgent.slice(0,80));
+  put('開啟方式',matchMedia('(display-mode: standalone)').matches?'主畫面 App':'瀏覽器分頁');
+  put('App 音量',S.vol+'%',S.vol>0?'':'bad');
+  // 1) Web Audio
+  let st='';try{ensureCtx();await Promise.race([ctx.resume(),sleep(800)]);st=ctx.state;}catch(e){st='錯誤 '+e.message;}
+  put('音訊引擎',st==='running'?'running（正常）':st,st==='running'?'ok':'bad');
+  if(ctx){put('取樣率',ctx.sampleRate+' Hz');if(ctx.outputLatency!==undefined)put('輸出延遲',Math.round((ctx.baseLatency+(ctx.outputLatency||0))*1000)+' ms');}
+  put('測試 1','播放「嗶 嗶」（音訊引擎）…');
+  try{const g=master.gain.value;master.gain.value=Math.max(g,.5);const t=ctx.currentTime+.05;
+    [0,.35].forEach(d=>{const o=ctx.createOscillator(),e=ctx.createGain();o.frequency.value=880;o.connect(e).connect(master);
+      e.gain.setValueAtTime(.0001,t+d);e.gain.exponentialRampToValueAtTime(.8,t+d+.01);e.gain.exponentialRampToValueAtTime(.0001,t+d+.25);o.start(t+d);o.stop(t+d+.3);});
+    await sleep(900);master.gain.value=g;
+    const moved=ctx.currentTime>t;lines.pop();put('測試 1',moved?'已送出（時鐘有在走）':'時鐘停住，聲音被擋',moved?'ok':'bad');
+  }catch(e){lines.pop();put('測試 1','失敗 '+e.message,'bad');}
+  // 2) HTML audio element (different output path)
+  put('測試 2','播放「嗡——」（一般音訊）…');
+  try{const a=new Audio(toneWav(523,.7));a.volume=1;await a.play();await sleep(900);lines.pop();put('測試 2','已播放','ok');}
+  catch(e){lines.pop();put('測試 2','被擋：'+(e.name||e.message),'bad');}
+  put('請回報','測試 1 和測試 2 各有沒有聽到？');
+  $('diagBtn').disabled=false;}
+$('diagBtn').onclick=runDiag;
+$('diagCopy').onclick=()=>{const t=diagText||$('diagOut').textContent;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{$('diagCopy').textContent='已複製';setTimeout(()=>$('diagCopy').textContent='複製結果',1500);})
+  .catch(()=>{const r=document.createRange();r.selectNodeContents($('diagOut'));const s=getSelection();s.removeAllRanges();s.addRange(r);});};
+
 renderSettings();renderBeats();setBpm(S.bpm);
 })();
 </script>
