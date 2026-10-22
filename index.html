@@ -405,10 +405,17 @@ let ctx=null,master=null,running=false,timer=null,nextTime=0,beatIdx=0,bars=0,be
 let queue=[],lastBeat={t:0,dur:.5,n:0},startedAt=0,elapsedPrev=0,wake=null;
 /* iPhone: play through the silent switch like a music app */
 try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
+const BOOST=2.8,volGain=()=>BOOST*Math.pow(S.vol/100,1.6);
 function ensureCtx(){
   if(ctx&&ctx.state==='closed'){ctx=null;voxBuf=null;}
-  if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});master=ctx.createGain();master.connect(ctx.destination);}
-  master.gain.value=Math.pow(S.vol/100,1.6);
+  if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});master=ctx.createGain();
+    /* loud but clean on phone speakers: boost, a limiter that only touches the loudest peaks,
+       then a soft clipper (linear up to 0.7, bends toward 0.98) so the output stays below 0 dBFS */
+    const comp=ctx.createDynamicsCompressor();comp.threshold.value=0;comp.knee.value=0;comp.ratio.value=20;comp.attack.value=0;comp.release.value=.05;
+    const half=ctx.createGain();half.gain.value=.5;const clip=ctx.createWaveShaper(),curve=new Float32Array(2048);
+    for(let i=0;i<curve.length;i++){const x=(i/(curve.length-1)*2-1)*2,a=Math.abs(x);curve[i]=Math.sign(x)*(a<=.7?a:.7+.28*Math.tanh((a-.7)/.28));}
+    clip.curve=curve;master.connect(comp).connect(half).connect(clip).connect(ctx.destination);}
+  master.gain.value=volGain();
   if(ctx.state!=='running'){try{ctx.resume();}catch(e){}}
   // unlock: a silent 1-sample buffer started inside the tap
   try{const b=ctx.createBuffer(1,1,22050),s=ctx.createBufferSource();s.buffer=b;s.connect(ctx.destination);s.start(0);}catch(e){}
@@ -510,7 +517,7 @@ $('bMinus').onclick=()=>{if(S.beats>1){S.beats--;S.accents=defaultAccents(S.beat
 $('bPlus').onclick=()=>{if(S.beats<16){S.beats++;S.accents=defaultAccents(S.beats,S.den);refresh();}};
 $('pyMinus').onclick=()=>{if(S.polyN>2){S.polyN--;refresh();}};
 $('pyPlus').onclick=()=>{if(S.polyN<16){S.polyN++;refresh();}};
-$('vol').oninput=e=>{S.vol=+e.target.value;$('volOut').textContent=S.vol+'%';if(master)master.gain.value=Math.pow(S.vol/100,1.6);save();};
+$('vol').oninput=e=>{S.vol=+e.target.value;$('volOut').textContent=S.vol+'%';if(master)master.gain.value=volGain();save();};
 $('trainTog').onclick=()=>{S.trainer=!S.trainer;refresh();updateProg();};
 $('polyTog').onclick=()=>{S.poly=!S.poly;refresh();};
 $('gapTog').onclick=()=>{S.gap=!S.gap;refresh();if(!S.gap)$('beatwrap').classList.remove('muted');};
