@@ -79,7 +79,6 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:12px}
 .polyrow{position:relative;height:18px;margin-top:10px;border-top:1px dashed var(--line)}
 .polyrow i{position:absolute;top:6px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--off)}
 .polyrow i.on{background:var(--poly)}
-.hint{font-size:12px;color:var(--muted);margin-top:10px}
 /* transport */
 .transport{display:grid;grid-template-columns:2fr 1fr;gap:10px}
 .go{height:64px;border-radius:14px;border:0;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.1em;text-transform:uppercase}
@@ -178,7 +177,6 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
   <section class="panel beatwrap" id="beatwrap" aria-label="拍子強弱">
     <div class="beats" id="beats"></div>
     <div class="polyrow" id="polyrow" hidden></div>
-    <div class="hint">點拍子切換：重音（不同音色）→ 一般（跟細分音一樣）→ 靜音</div>
   </section>
 
   <div class="transport">
@@ -199,7 +197,6 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
     <div class="row">
       <div class="label">細分節奏</div>
       <div class="pats" id="pats"></div>
-      <div class="hint" style="margin-top:2px">實心為發聲、空心為休止。第一格休止時主拍也不響，可練反拍。</div>
     </div>
     <div class="row">
       <div class="label">音色</div>
