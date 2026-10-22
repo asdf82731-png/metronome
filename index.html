@@ -405,7 +405,7 @@ let ctx=null,master=null,running=false,timer=null,nextTime=0,beatIdx=0,bars=0,be
 let queue=[],lastBeat={t:0,dur:.5,n:0},startedAt=0,elapsedPrev=0,wake=null;
 /* iPhone: play through the silent switch like a music app */
 try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
-const BOOST=2.8,volGain=()=>BOOST*Math.pow(S.vol/100,1.6);
+const BOOST=4,HOLD=.025,volGain=()=>BOOST*Math.pow(S.vol/100,1.6);
 function ensureCtx(){
   if(ctx&&ctx.state==='closed'){ctx=null;voxBuf=null;}
   if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});master=ctx.createGain();
@@ -442,10 +442,11 @@ function say(name,t,gain,until){const b=voxBuf&&voxBuf[name];if(!b)return false;
   return true;}
 function blip(level,t){const k=KITS[S.kit].voice?KITS.wood:KITS[S.kit];const o=ctx.createOscillator(),g=ctx.createGain();
   o.type=level==='p'?'sine':k.w;o.frequency.setValueAtTime(k.f[level],t);
-  if(k===KITS.wood)o.frequency.exponentialRampToValueAtTime(k.f[level]*.7,t+k.d);
+  if(k===KITS.wood)o.frequency.exponentialRampToValueAtTime(k.f[level]*.7,t+HOLD+k.d);
   const peak=(level==='p'?.9:k.v)*LVLGAIN[level],dec=level==='p'?.06:k.d;
-  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.002);
-  g.gain.exponentialRampToValueAtTime(.0001,t+dec);o.connect(g).connect(master);o.start(t);o.stop(t+dec+.02);
+  /* hold full level for HOLD before fading: far more energy per click, so it sounds louder at the same peak */
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.002);g.gain.setValueAtTime(peak,t+HOLD);
+  g.gain.exponentialRampToValueAtTime(.0001,t+HOLD+dec);o.connect(g).connect(master);o.start(t);o.stop(t+HOLD+dec+.02);
   if(level===3){const o2=ctx.createOscillator(),g2=ctx.createGain();o2.type='sine';o2.frequency.setValueAtTime(k.f[3]*2,t);
     g2.gain.setValueAtTime(.0001,t);g2.gain.exponentialRampToValueAtTime(peak*.6,t+.002);g2.gain.exponentialRampToValueAtTime(.0001,t+.05);
     o2.connect(g2).connect(master);o2.start(t);o2.stop(t+.07);}}
