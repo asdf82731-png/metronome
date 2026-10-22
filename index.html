@@ -131,11 +131,21 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:12px}
 .saverow .txt{text-align:left;padding-inline:12px;font-family:var(--body);min-width:0;flex:1}
 .btn{height:38px;padding-inline:16px;border-radius:9px;border:0;background:var(--ink);color:var(--bg);font-weight:600;flex:none}
 .plist{display:grid;gap:6px;margin-top:10px}
-.pitem{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding-left:12px}
+.pwrap{border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.pwrap.cur{border-color:var(--accent)}
+.pitem{display:flex;align-items:center;gap:8px;padding-left:12px}
 .pitem .load{flex:1;min-width:0;text-align:left;border:0;background:none;padding:9px 0;display:flex;justify-content:space-between;gap:10px}
 .pitem .load span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pitem .load small{font-family:var(--mono);color:var(--muted);flex:none}
 .pitem .del{border:0;background:none;width:40px;height:40px;color:var(--muted);font-size:18px}
+.pedit{display:grid;gap:8px;padding:0 12px 12px}
+.pedit .erow{display:grid;grid-template-columns:1fr 92px;gap:8px}
+.pedit .txt{text-align:left;padding-inline:10px;font-family:var(--body)}
+.eacts{display:flex;gap:6px}
+.eacts button{height:38px;min-width:44px;padding-inline:10px;border-radius:9px;border:1px solid var(--line);background:var(--panel);font-size:14px}
+.eacts .grow{flex:1;white-space:nowrap}
+.eacts button:disabled{opacity:.35}
+.eacts .danger{color:var(--down)}
 .empty{font-size:13px;color:var(--muted);margin:10px 0 0}
 .keys{font-size:12px;color:var(--muted);text-align:center}
 kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
@@ -246,7 +256,7 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
   </section>
 
   <section class="panel">
-    <div class="switch"><div><h2>我的設定</h2><p>儲存速度、拍號、重音、細分等組合，一鍵切換</p></div></div>
+    <div class="switch"><div><h2>我的設定</h2><p>儲存速度、拍號、重音、細分等組合，一鍵切換。按 ✎ 可以改名、改速度、更新或調整順序</p></div></div>
     <form class="saverow" id="saveForm">
       <input class="txt" id="pName" maxlength="24" placeholder="例如：Blues shuffle 練習" aria-label="設定名稱">
       <button class="btn" type="submit">儲存</button>
@@ -257,7 +267,7 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
   <section class="panel">
     <div class="switch"><div><h2>測試聲音</h2><p>沒有聲音時按這裡，依序播放兩種測試音並顯示狀態</p></div></div>
     <div class="saverow"><button class="btn" id="diagBtn" type="button" style="flex:1">開始測試</button><button class="btn" id="diagCopy" type="button" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">複製結果</button></div>
-    <pre class="diag" id="diagOut">尚未測試　·　版本 v3</pre>
+    <pre class="diag" id="diagOut">尚未測試　·　版本 v4</pre>
   </section>
 
   <div class="keys"><kbd>Space</kbd> 開始/停止　<kbd>T</kbd> Tap　<kbd>↑</kbd><kbd>↓</kbd> ±1　<kbd>←</kbd><kbd>→</kbd> ±5</div>
@@ -349,19 +359,47 @@ function refresh(){save();renderSettings();renderBeats();}
 
 /* presets list */
 function summary(p){return p.bpm+' · '+p.beats+'/'+p.den+' · '+(PATS.find(x=>x.k===p.pat)||PATS[0]).n;}
+let editIdx=-1,curIdx=-1;
+function loadSet(p){const keep=S.vol;Object.assign(S,JSON.parse(JSON.stringify(p.s)));S.vol=keep;
+  if(!Array.isArray(S.accents)||S.accents.length!==S.beats)S.accents=defaultAccents(S.beats,S.den);refresh();setBpm(S.bpm);}
+function snapshot(){const snap=JSON.parse(JSON.stringify(S));delete snap.vol;return snap;}
 function renderList(){const el=$('plist');el.innerHTML='';
+  if(editIdx>=saved.length)editIdx=-1;if(curIdx>=saved.length)curIdx=-1;
   if(!saved.length){el.innerHTML='<p class="empty">還沒有儲存的設定。調好之後輸入名稱按「儲存」。</p>';return;}
-  saved.forEach((p,i)=>{const row=document.createElement('div');row.className='pitem';
+  saved.forEach((p,i)=>{const wrap=document.createElement('div');wrap.className='pwrap'+(i===curIdx?' cur':'');
+    const row=document.createElement('div');row.className='pitem';
     const ld=document.createElement('button');ld.className='load';ld.innerHTML='<span></span><small></small>';
     ld.querySelector('span').textContent=p.name;ld.querySelector('small').textContent=summary(p.s);
-    ld.onclick=()=>{const keep=S.vol;Object.assign(S,JSON.parse(JSON.stringify(p.s)));S.vol=keep;
-      if(!Array.isArray(S.accents)||S.accents.length!==S.beats)S.accents=defaultAccents(S.beats,S.den);refresh();setBpm(S.bpm);};
-    const del=document.createElement('button');del.className='del';del.textContent='×';del.setAttribute('aria-label','刪除 '+p.name);
-    del.onclick=()=>{saved.splice(i,1);saveSets();renderList();};
-    row.append(ld,del);el.appendChild(row);});}
+    ld.onclick=()=>{loadSet(p);curIdx=i;renderList();};
+    const ed=document.createElement('button');ed.className='del';ed.textContent=i===editIdx?'✓':'✎';
+    ed.setAttribute('aria-label',(i===editIdx?'完成調整 ':'調整 ')+p.name);ed.setAttribute('aria-expanded',i===editIdx);
+    ed.onclick=()=>{editIdx=i===editIdx?-1:i;renderList();};
+    row.append(ld,ed);wrap.appendChild(row);if(i===editIdx)wrap.appendChild(editor(p,i));el.appendChild(wrap);});}
+/* editor for one saved set: rename, change BPM, overwrite with current settings, reorder, delete */
+function editor(p,i){const f=document.createElement('div');f.className='pedit';
+  f.innerHTML='<div class="erow"><label class="fld">名稱<input class="txt" maxlength="24"></label>'+
+    '<label class="fld">BPM<input type="number" inputmode="numeric" min="20" max="300"></label></div>'+
+    '<div class="eacts"><button class="grow" data-a="upd">用目前設定更新</button>'+
+    '<button data-a="up" aria-label="往上移">↑</button><button data-a="down" aria-label="往下移">↓</button>'+
+    '<button class="danger" data-a="del">刪除</button></div>';
+  const [nm,bp]=f.querySelectorAll('input');nm.value=p.name;bp.value=p.s.bpm;
+  nm.onchange=()=>{const v=nm.value.trim();
+    if(!v||saved.some((q,j)=>j!==i&&q.name===v)){nm.value=p.name;return;}
+    p.name=v;saveSets();renderList();};
+  bp.onchange=()=>{const v=Number(bp.value);if(!v){bp.value=p.s.bpm;return;}
+    p.s.bpm=clamp(Math.round(v),20,300);if(i===curIdx)setBpm(p.s.bpm);saveSets();renderList();};
+  const up=f.querySelector('[data-a="up"]'),dn=f.querySelector('[data-a="down"]');up.disabled=i===0;dn.disabled=i===saved.length-1;
+  const move=d=>{const j=i+d;[saved[i],saved[j]]=[saved[j],saved[i]];
+    if(curIdx===i)curIdx=j;else if(curIdx===j)curIdx=i;editIdx=j;saveSets();renderList();};
+  up.onclick=()=>move(-1);dn.onclick=()=>move(1);
+  f.querySelector('[data-a="upd"]').onclick=()=>{p.s=snapshot();curIdx=i;saveSets();renderList();};
+  f.querySelector('[data-a="del"]').onclick=()=>{if(!confirm('刪除「'+p.name+'」？'))return;saved.splice(i,1);
+    if(curIdx===i)curIdx=-1;else if(curIdx>i)curIdx--;editIdx=-1;saveSets();renderList();};
+  return f;}
 $('saveForm').addEventListener('submit',e=>{e.preventDefault();const name=$('pName').value.trim()||('設定 '+(saved.length+1));
-  const snap=JSON.parse(JSON.stringify(S));delete snap.vol;
+  const snap=snapshot();
   const ex=saved.findIndex(p=>p.name===name);if(ex>=0)saved[ex].s=snap;else saved.push({name,s:snap});
+  curIdx=ex>=0?ex:saved.length-1;
   $('pName').value='';saveSets();renderList();});
 
 /* scale arcs for pendulum */
@@ -507,7 +545,7 @@ async function runDiag(){
     out.innerHTML=lines.map(([a,b,c])=>a+'：'+(c?'<span class="'+c+'">'+b+'</span>':b)).join('\n');
     diagText=lines.map(([a,b])=>a+'：'+b).join('\n');};
   $('diagBtn').disabled=true;out.textContent='測試中…';lines.length=0;
-  put('版本','v3');
+  put('版本','v4');
   put('瀏覽器',(navigator.userAgentData&&navigator.userAgentData.brands?navigator.userAgentData.brands.map(b=>b.brand+' '+b.version).filter(s=>!/Not/.test(s)).join(', '):'')||navigator.userAgent.slice(0,80));
   put('開啟方式',matchMedia('(display-mode: standalone)').matches?'主畫面 App':'瀏覽器分頁');
   put('App 音量',S.vol+'%',S.vol>0?'':'bad');
