@@ -56,6 +56,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 /* tempo */
 .tempo{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;margin-top:6px}
 .bpm{text-align:center;font-family:var(--display);font-weight:800;font-size:96px;line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.bpm input{font:inherit;letter-spacing:inherit;color:inherit;text-align:center;width:3.1ch;max-width:100%;height:.95em;line-height:.95em;padding:0;margin:0;
+  background:transparent;border:0;border-bottom:2px dashed transparent;border-radius:0;user-select:text;-webkit-user-select:text}
+.bpm input:focus{outline:none;border-bottom-color:var(--accent);background:var(--off)}
 .bpm small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;letter-spacing:.2em;color:var(--muted);margin-top:6px}
 .nudge{display:grid;gap:6px}
 .nudge button{width:52px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-family:var(--mono);font-size:14px}
@@ -147,8 +150,6 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:12px}
 .eacts button:disabled{opacity:.35}
 .eacts .danger{color:var(--down)}
 .empty{font-size:13px;color:var(--muted);margin:10px 0 0}
-.keys{font-size:12px;color:var(--muted);text-align:center}
-kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
 @media (max-width:420px){.bpm{font-size:80px}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.pat{padding:9px 6px 7px}}
 /* landscape: tempo, beats and start button on the left (they stay on screen), settings scroll on the right */
 @media (orientation:landscape) and (min-width:640px){
@@ -184,7 +185,7 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
     </div>
     <div class="tempo">
       <div class="nudge"><button id="m5" aria-label="減 5 BPM">−5</button><button id="m1" aria-label="減 1 BPM">−1</button></div>
-      <div class="bpm"><span id="bpmVal">120</span><small>BPM</small></div>
+      <div class="bpm"><input id="bpmVal" type="text" value="120" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="速度 BPM，點一下可以直接輸入數字"><small>BPM</small></div>
       <div class="nudge"><button id="p5" aria-label="加 5 BPM">+5</button><button id="p1" aria-label="加 1 BPM">+1</button></div>
     </div>
     <div class="marking" id="marking">Allegro<span>快板</span></div>
@@ -279,8 +280,6 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
   </section>
 
 
-  <div class="keys"><kbd>Space</kbd> 開始/停止　<kbd>T</kbd> Tap　<kbd>↑</kbd><kbd>↓</kbd> ±1　<kbd>←</kbd><kbd>→</kbd> ±5</div>
-  <div class="keys">版本 v13</div>
 </div>
 </div>
 
@@ -337,7 +336,7 @@ const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const PAT=()=>PATS.find(p=>p.k===S.pat);
 
 /* ---------- UI ---------- */
-function setBpm(v){S.bpm=clamp(Math.round(v),20,300);$('bpmVal').textContent=S.bpm;$('bpmRange').value=S.bpm;
+function setBpm(v){S.bpm=clamp(Math.round(v),20,300);if(document.activeElement!==$('bpmVal'))$('bpmVal').value=S.bpm;$('bpmRange').value=S.bpm;
   const t=TERMS.find(x=>S.bpm<x[0]);$('marking').innerHTML=t[1]+'<span>'+t[2]+'</span>';save();updateProg();}
 function renderBeats(){
   const el=$('beats');el.innerHTML='';const st=PAT().s;
@@ -549,6 +548,13 @@ $('gapTog').onclick=()=>{S.gap=!S.gap;refresh();if(!S.gap)$('beatwrap').classLis
 const LIM={tStart:[20,300],tTarget:[20,300],tBars:[1,64],tStep:[1,40],gPlay:[1,32],gMute:[1,32]};
 Object.keys(LIM).forEach(k=>$(k).onchange=e=>{const lim=LIM[k];
   S[k]=clamp(Math.round(+e.target.value)||lim[0],lim[0],lim[1]);e.target.value=S[k];save();updateProg();});
+/* tap the BPM number to type a tempo */
+{const bi=$('bpmVal');
+  let fresh=false;bi.addEventListener('focus',()=>{fresh=true;bi.select();});
+  bi.addEventListener('click',()=>{if(fresh){fresh=false;bi.select();}}); // the tap itself would drop the selection
+  bi.addEventListener('input',()=>{bi.value=bi.value.replace(/\D/g,'').slice(0,3);});
+  bi.addEventListener('keydown',e=>{if(e.key==='Enter')bi.blur();else if(e.key==='Escape'){bi.value=S.bpm;bi.blur();}});
+  bi.addEventListener('blur',()=>{fresh=false;const v=parseInt(bi.value,10);if(v)setBpm(v);bi.value=S.bpm;});}
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'&&e.target.type!=='range')return;
   if(e.code==='Space'){e.preventDefault();toggle();}else if(e.key==='t'||e.key==='T')tap();
   else if(e.key==='ArrowUp'){e.preventDefault();setBpm(S.bpm+1);}else if(e.key==='ArrowDown'){e.preventDefault();setBpm(S.bpm-1);}
