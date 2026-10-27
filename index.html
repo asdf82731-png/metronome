@@ -275,7 +275,7 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
 
 
   <div class="keys"><kbd>Space</kbd> 開始/停止　<kbd>T</kbd> Tap　<kbd>↑</kbd><kbd>↓</kbd> ±1　<kbd>←</kbd><kbd>→</kbd> ±5</div>
-  <div class="keys">版本 v11</div>
+  <div class="keys">版本 v12</div>
 </div>
 </div>
 
@@ -423,7 +423,7 @@ let ctx=null,master=null,running=false,timer=null,nextTime=0,beatIdx=0,bars=0,be
 let queue=[],lastBeat={t:0,dur:.5,n:0},startedAt=0,elapsedPrev=0,wake=null;
 /* iPhone: play through the silent switch like a music app */
 try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
-const BOOST=4,HOLD=.025,volGain=()=>BOOST*Math.pow(S.vol/100,1.6);
+const BOOST=1,HOLD=.025,volGain=()=>BOOST*Math.pow(S.vol/100,1.6);
 function ensureCtx(){
   if(ctx&&ctx.state==='closed'){ctx=null;voxBuf=null;}
   if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});master=ctx.createGain();
