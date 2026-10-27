@@ -156,10 +156,15 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
   .wrap{max-width:1100px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
   .stage{position:sticky;top:12px}}
 @media (orientation:landscape) and (min-width:640px) and (max-height:540px){
-  .stage{gap:10px}.stage .panel{padding:12px}
-  .pend{display:none}.tempo{margin-top:0}.bpm{font-size:64px}.marking{margin-top:4px;font-size:17px}
-  input[type=range]{margin-top:8px}.beats{height:64px}.go,.tap{height:52px}
-  .beat[data-l="3"] .bar{height:42px} .beat[data-l="2"] .bar{height:28px}}
+  body{padding-block:8px 16px}.stage{top:8px;gap:8px}.stage .panel{padding:10px 12px}
+  .pend{display:none}.tempo{margin-top:0}.bpm{font-size:56px}.bpm small{margin-top:2px}
+  .nudge{gap:4px}.nudge button{height:34px}.marking{margin-top:2px;font-size:16px}
+  input[type=range]{margin-top:6px}.beats{height:70px}.go,.tap{height:48px}
+  .beat[data-l="3"] .bar{height:36px} .beat[data-l="2"] .bar{height:22px}}
+/* very short landscape (phone with the browser bar showing): drop the header and tempo name so ▶ always fits */
+@media (orientation:landscape) and (min-width:640px) and (max-height:400px){
+  .stage .top,.marking{display:none}.beats{height:58px}.go,.tap{height:42px}.stage .panel{padding:8px 12px}.polyrow{margin-top:6px;height:12px}
+  .beat[data-l="3"] .bar{height:24px} .beat[data-l="2"] .bar{height:14px}}
 @media (prefers-reduced-motion:reduce){.bar,.tog::after,.prog i,.beatwrap{transition:none}}
 </style>
 </head>
@@ -275,7 +280,7 @@ kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-b
 
 
   <div class="keys"><kbd>Space</kbd> 開始/停止　<kbd>T</kbd> Tap　<kbd>↑</kbd><kbd>↓</kbd> ±1　<kbd>←</kbd><kbd>→</kbd> ±5</div>
-  <div class="keys">版本 v12</div>
+  <div class="keys">版本 v13</div>
 </div>
 </div>
 
