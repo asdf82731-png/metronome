@@ -155,9 +155,14 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:12px}
 @media (orientation:landscape) and (min-width:640px){
   body{padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:12px 24px}
   .wrap{max-width:1100px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
-  .stage{position:sticky;top:12px}}
+  /* the left column is exactly one screen tall: the pendulum gives up height so 開始 never drops below the fold */
+  .stage{position:sticky;top:12px;height:calc(100vh - 24px);height:calc(100dvh - 24px);display:flex;flex-direction:column}
+  .stage>*{flex:none}
+  .stage>.panel:first-of-type{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
+  .pend{flex:0 1 160px;height:auto;min-height:0}
+  .needle{height:auto;top:14px}}
 @media (orientation:landscape) and (min-width:640px) and (max-height:540px){
-  body{padding-block:8px 16px}.stage{top:8px;gap:8px}.stage .panel{padding:10px 12px}
+  body{padding-block:8px 16px}.stage{top:8px;gap:8px;height:calc(100vh - 16px);height:calc(100dvh - 16px)}.stage .panel{padding:10px 12px}
   .pend{display:none}.tempo{margin-top:0}.bpm{font-size:56px}.bpm small{margin-top:2px}
   .nudge{gap:4px}.nudge button{height:34px}.marking{margin-top:2px;font-size:16px}
   input[type=range]{margin-top:6px}.beats{height:70px}.go,.tap{height:48px}
