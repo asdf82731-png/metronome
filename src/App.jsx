@@ -10,10 +10,10 @@ import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import {ProgressBar} from '@astryxdesign/core/ProgressBar';
 import {AlertDialog} from '@astryxdesign/core/AlertDialog';
-import {Badge} from '@astryxdesign/core/Badge';
 import {Heading} from '@astryxdesign/core/Heading';
 import {Text} from '@astryxdesign/core/Text';
 import {createEngine} from './engine.js';
+import Notation from './Notation.jsx';
 import {
   DENS, KITS, KIT_ORDER, PATS, PRESETS, clamp, defaultAccents, nextAccent, patOf, termOf,
 } from './music.js';
@@ -40,7 +40,6 @@ function load(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
 }
 function store(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
-const summary = s => `${s.bpm} · ${s.beats}/${s.den} · ${patOf(s.pat).n}`;
 const LIM = {tStart: [20, 300], tTarget: [20, 300], tBars: [1, 64], tStep: [1, 40], gPlay: [1, 32], gMute: [1, 32]};
 
 export default function App() {
@@ -129,9 +128,11 @@ function Metronome() {
       <div className="stage">
         <header className="top">
           <Heading level={1} type="display-3">Pro Metronome</Heading>
-          <Text type="supporting" hasTabularNumbers>
-            {S.beats}/{S.den} · {pat.n}{S.poly ? ` · ${S.polyN}:${S.beats}` : ''}
-          </Text>
+          <span className="meta">
+            <Text type="supporting" hasTabularNumbers>{S.beats}/{S.den}</Text>
+            <Notation steps={pat.s} label={pat.n} />
+            {S.poly && <Text type="supporting" hasTabularNumbers>{S.polyN}:{S.beats}</Text>}
+          </span>
         </header>
 
         <section className="panel tempo-panel" aria-label="速度">
@@ -204,8 +205,7 @@ function Metronome() {
             <div className="pats">
               {PATS.map(p => (
                 <button key={p.k} type="button" className="pat" aria-pressed={p.k === S.pat} aria-label={p.n} onClick={() => update({pat: p.k})}>
-                  <span className="rgrid">{p.s.map((x, k) => <span key={k} style={{flex: x[0]}} className={x[1] ? '' : 'r'} />)}</span>
-                  <em>{p.n}</em>
+                  <Notation steps={p.s} label={p.n} />
                 </button>
               ))}
             </div>
@@ -376,7 +376,10 @@ function SavedSets({S, saved, setSaved, onLoad, onBpm}) {
             <div className="pitem">
               <button type="button" className="load" onClick={() => { onLoad(p); setCurIdx(i); }}>
                 <Text maxLines={1}>{p.name}</Text>
-                <Badge label={summary(p.s)} />
+                <span className="meta">
+                  <Text type="supporting" hasTabularNumbers>{p.s.bpm} · {p.s.beats}/{p.s.den}</Text>
+                  <Notation steps={patOf(p.s.pat).s} label={patOf(p.s.pat).n} />
+                </span>
               </button>
               <Button size="sm" variant="ghost" label={i === editIdx ? '完成' : '調整'}
                 onClick={() => setEditIdx(i === editIdx ? -1 : i)} />

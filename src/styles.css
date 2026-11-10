@@ -92,16 +92,15 @@ input { user-select: text; -webkit-user-select: text; }
 .step output { min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
 .pats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .pat {
-  display: grid; gap: 6px; padding: 10px 8px 8px; border-radius: var(--radius-element, 10px); border: 1px solid var(--color-border);
+  display: grid; place-items: center; padding: 8px 6px; border-radius: var(--radius-element, 10px); border: 1px solid var(--color-border);
   background: var(--color-background-body); color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .pat[aria-pressed="true"] { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
 .pat:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-.rgrid { display: flex; gap: 3px; height: 16px; }
-.rgrid span { border-radius: 3px; background: var(--color-text-primary); }
-.rgrid span.r { background: transparent; border: 1.5px solid var(--color-text-secondary); }
-.pat[aria-pressed="true"] .rgrid span:not(.r) { background: var(--color-accent); }
-.pat em { font-style: normal; font-size: 11px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notation { display: block; width: 100%; height: 36px; color: var(--color-text-primary); }
+.pat[aria-pressed="true"] .notation { color: var(--color-accent); }
+.meta { display: inline-flex; align-items: center; gap: 6px; flex: none; color: var(--color-text-secondary); }
+.meta .notation { width: 36px; height: 22px; color: inherit; }
 .body { display: grid; gap: 12px; }
 .ratio { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .ratio-out { font: 800 32px/1 var(--display-font); color: var(--poly); font-variant-numeric: tabular-nums; }
@@ -126,7 +125,7 @@ input { user-select: text; -webkit-user-select: text; }
 @media (max-width: 420px) {
   .bpm input { font-size: 80px; }
   .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pat { padding: 9px 6px 7px; }
+  .pat { padding: 6px 4px; }
 }
 
 /* landscape: tempo, beats and 開始 on the left (they stay on screen), settings scroll on the right */
