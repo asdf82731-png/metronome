@@ -1,5 +1,5 @@
 // Pro Metronome service worker: app shell and the built JS/CSS cached on install, fonts cached on first use.
-const VERSION = 'pro-metronome-v18';
+const VERSION = 'pro-metronome-v19';
 const SHELL = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon-180.png'];
 
