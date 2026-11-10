@@ -16,6 +16,26 @@
 
 第一次開啟後就會快取，之後沒有網路也能使用。
 
+## 程式架構（Astryx 版）
+
+介面用 [Astryx](https://github.com/meta/astryx)（Meta 開源的設計系統）＋ React 19 製作，用 Vite 建置。
+
+- `src/`：原始碼。改程式只改這裡。
+  - `App.jsx`：畫面（Astryx 元件）
+  - `engine.js`：Web Audio 節拍器（排程、合成音色、人聲數拍）
+  - `music.js`：拍號、細分節奏、音色等資料
+  - `vox.js`：人聲數拍的音檔（base64）
+  - `styles.css`：版面、擺錘、拍子條等節拍器專用的樣式（顏色用 Astryx 主題 token）
+  - `public/`：`sw.js`、`manifest.webmanifest`、`icons/`，建置時原樣複製到根目錄
+- 根目錄的 `index.html`、`assets/`、`sw.js`、`manifest.webmanifest`、`icons/` 是**建置產生的檔案**，GitHub Pages 直接提供它們。不要手動修改。
+
 ## 更新版本
 
-改完檔案重新上傳後，把 `sw.js` 第 2 行的 `pro-metronome-v1` 改成 `v2`（依序遞增），手機重新開啟 App 一兩次就會拿到新版。
+```bash
+npm install        # 第一次
+npm run build      # 改完 src/ 之後重新建置，產生根目錄的檔案
+```
+
+1. 把 `src/public/sw.js` 第 2 行的版本（例如 `pro-metronome-v16`）加一。
+2. `npm run build`，把 `src/` 和建置產生的檔案一起 commit。
+3. 手機重新開啟 App 一兩次就會拿到新版。
