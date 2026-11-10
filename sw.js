@@ -1,10 +1,16 @@
-// Pro Metronome service worker: app shell cached on install, fonts cached on first use.
-const VERSION = 'pro-metronome-v15';
+// Pro Metronome service worker: app shell and the built JS/CSS cached on install, fonts cached on first use.
+const VERSION = 'pro-metronome-v16';
 const SHELL = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon-180.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // the build gives JS/CSS hashed names, so read them from the fresh index.html and cache them too
+  e.waitUntil(caches.open(VERSION).then(async c => {
+    await c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'})));
+    const html = await (await c.match('./index.html')).text();
+    const built = [...new Set(html.match(/\.\/assets\/[^"']+/g) || [])];
+    await c.addAll(built);
+  }).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))

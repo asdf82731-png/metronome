@@ -1,0 +1,170 @@
+/* Page layout and the metronome's own visuals (pendulum, beat bars, rhythm glyphs).
+   Controls are Astryx components; everything here uses Astryx theme tokens so light and dark mode follow the theme. */
+:root {
+  --down: light-dark(#C9721F, #F09A45);   /* the accented beat */
+  --poly: light-dark(#6A4FB3, #A48BEB);   /* polyrhythm dots */
+  --bar-off: var(--color-background-muted);
+  --display-font: 'Figtree', var(--font-family-body, system-ui), sans-serif;
+  color-scheme: light dark;
+}
+/* keep Pro Metronome's teal: override the neutral theme's black/white accent (unlayered, so it wins over the theme layer) */
+:root, [data-astryx-theme] {
+  --color-accent: light-dark(#0A6B6B, #3DB5AA);
+  --color-accent-muted: light-dark(#CFE5E3, #1D3B39);
+  --color-on-accent: light-dark(#FFFFFF, #06201E);
+}
+html, body { background: var(--color-background-body); color: var(--color-text-primary); }
+body {
+  margin: 0; font-family: var(--font-family-body);
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(18px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+  -webkit-text-size-adjust: 100%; overscroll-behavior-y: none; user-select: none; -webkit-user-select: none;
+}
+input { user-select: text; -webkit-user-select: text; }
+
+.wrap { max-width: 540px; margin: 0 auto; display: grid; gap: 14px; }
+.stage, .side { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.top h1 { font-size: 24px; letter-spacing: .02em; }
+.panel {
+  background: var(--color-background-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-container, 14px); padding: 16px; display: grid; gap: 12px; min-width: 0;
+}
+
+/* pendulum */
+.pend { position: relative; height: 120px; overflow: hidden; }
+.pend svg { position: absolute; inset: 0; width: 100%; height: 100%; stroke: var(--color-text-secondary); }
+.needle {
+  position: absolute; left: 50%; bottom: 6px; width: 3px; height: 104px; margin-left: -1.5px; background: var(--color-text-primary);
+  border-radius: 2px; transform-origin: 50% 100%; transform: rotate(-26deg);
+}
+.needle::after {
+  content: ""; position: absolute; left: 50%; top: 22px; width: 16px; height: 12px; margin-left: -8px;
+  background: var(--color-accent); border-radius: 2px;
+}
+.pivot { position: absolute; left: 50%; bottom: 0; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--color-text-primary); }
+
+/* tempo */
+.tempo { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+.nudge { display: grid; gap: 6px; }
+.nudge button { min-width: 56px; }
+.bpm { display: grid; justify-items: center; gap: 4px; min-width: 0; }
+.bpm input {
+  font: 800 96px/.95 var(--display-font); font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  color: var(--color-text-primary); text-align: center; width: 3.1ch; max-width: 100%; padding: 0; margin: 0;
+  background: transparent; border: 0; border-bottom: 2px dashed transparent; border-radius: 0;
+}
+.bpm input:focus { outline: none; border-bottom-color: var(--color-accent); background: var(--color-background-muted); }
+.bpm > span { letter-spacing: .2em; }
+.marking { text-align: center; }
+
+/* beats */
+.beatwrap { transition: opacity .15s; }
+.beatwrap.muted { opacity: .35; }
+.beats { display: flex; align-items: flex-end; height: 100px; }
+.beat {
+  flex: 1; min-width: 0; height: 100%; border: 0; background: none; padding: 0; color: inherit; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; -webkit-tap-highlight-color: transparent;
+}
+.beat:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
+.bar { display: block; width: 100%; border-radius: 6px; background: var(--bar-off); transition: background .06s; }
+.beat[data-l="3"] .bar { height: 72px; } .beat[data-l="2"] .bar { height: 48px; }
+.beat[data-l="0"] .bar { height: 6px; background: transparent; border: 1px dashed var(--color-border-emphasized, var(--color-border)); }
+.beat.on .bar { background: var(--color-accent); } .beat.on[data-l="3"] .bar { background: var(--down); }
+.pips { display: flex; gap: 2px; justify-content: center; height: 6px; }
+.pip { width: 6px; height: 6px; border-radius: 50%; background: var(--color-border-emphasized, var(--color-border)); }
+.pip.rest { background: transparent; border: 1px solid var(--color-border); }
+.pip.on { background: var(--color-accent); }
+.num { font-size: 11px; color: var(--color-text-secondary); text-align: center; font-variant-numeric: tabular-nums; }
+.polyrow { position: relative; height: 18px; border-top: 1px dashed var(--color-border); }
+.polyrow i { position: absolute; top: 5px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--bar-off); }
+.polyrow i.on { background: var(--poly); }
+
+.transport { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.transport button { height: 64px; font-size: 22px; letter-spacing: .08em; }
+
+/* settings */
+.row { display: grid; gap: 8px; }
+.row + .row { padding-top: 14px; border-top: 1px solid var(--color-border); }
+.sig { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.step { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--color-border); border-radius: var(--radius-element, 9px); padding: 2px; }
+.step output { min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+.pats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.pat {
+  display: grid; place-items: center; padding: 8px 6px; border-radius: var(--radius-element, 10px); border: 1px solid var(--color-border);
+  background: var(--color-background-body); color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.pat[aria-pressed="true"] { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
+.pat:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.notation { display: block; width: 100%; height: 36px; color: var(--color-text-primary); }
+.pat[aria-pressed="true"] .notation { color: var(--color-accent); }
+.meta { display: inline-flex; align-items: center; gap: 6px; flex: none; color: var(--color-text-secondary); }
+.meta .notation { width: 36px; height: 22px; color: inherit; }
+.body { display: grid; gap: 12px; }
+.ratio { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ratio-out { font: 800 32px/1 var(--display-font); color: var(--poly); font-variant-numeric: tabular-nums; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+/* saved sets */
+.saverow { display: flex; gap: 8px; align-items: flex-start; }
+.saverow > :first-child { flex: 1; min-width: 0; }
+.plist { display: grid; gap: 6px; }
+.pwrap { border: 1px solid var(--color-border); border-radius: var(--radius-element, 10px); background: var(--color-background-body); }
+.pwrap.cur { border-color: var(--color-accent); }
+.pitem { display: flex; align-items: center; gap: 6px; padding-right: 6px; }
+.load {
+  flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 12px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer;
+}
+.pedit { display: grid; gap: 8px; padding: 0 12px 12px; }
+.erow { display: grid; grid-template-columns: 1fr 96px; gap: 8px; align-items: end; }
+.eacts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 420px) {
+  .bpm input { font-size: 80px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pat { padding: 6px 4px; }
+}
+
+/* landscape: tempo, beats and 開始 on the left (they stay on screen), settings scroll on the right */
+@media (orientation: landscape) and (min-width: 640px) {
+  body { padding-block: 12px 24px; }
+  .wrap { max-width: 1100px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  /* the left column is exactly one screen tall: the pendulum gives up height so 開始 never drops below the fold */
+  .stage { position: sticky; top: 12px; height: calc(100vh - 24px); height: calc(100dvh - 24px); display: flex; flex-direction: column; }
+  .stage > * { flex: none; }
+  .stage > .tempo-panel { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .pend { flex: 0 1 160px; height: auto; min-height: 0; container-type: size; }
+  .needle { height: auto; top: 14px; }
+}
+/* tablet height (about 541–680px): a slightly smaller tempo number leaves room for the pendulum */
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 680px) {
+  .stage { gap: 10px; }
+  .stage .panel { gap: 8px; padding: 12px 16px; }
+  .bpm input { font-size: 72px; }
+}
+/* a pendulum squeezed below ~72px is just a dot: leave the space empty instead */
+@container (max-height: 72px) { .pend > * { display: none; } }
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 540px) {
+  body { padding-block: 8px 16px; }
+  .stage { top: 8px; gap: 8px; height: calc(100vh - 16px); height: calc(100dvh - 16px); }
+  .stage .panel { padding: 10px 12px; gap: 6px; }
+  .pend { display: none; }
+  .bpm input { font-size: 56px; }
+  .nudge { gap: 4px; }
+  .beats { height: 70px; }
+  .transport button { height: 48px; }
+  .beat[data-l="3"] .bar { height: 36px; } .beat[data-l="2"] .bar { height: 22px; }
+}
+/* very short landscape (phone with the browser bar showing): drop the header and tempo name so 開始 always fits */
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 400px) {
+  .stage .top, .marking { display: none; }
+  .beats { height: 58px; }
+  .transport button { height: 42px; }
+  .stage .panel { padding: 8px 12px; }
+  .polyrow { height: 12px; }
+  .beat[data-l="3"] .bar { height: 24px; } .beat[data-l="2"] .bar { height: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .bar, .beatwrap { transition: none; } }
