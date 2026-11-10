@@ -1,17 +1,17 @@
 /* Page layout and the metronome's own visuals (pendulum, beat bars, rhythm glyphs).
    Controls are Astryx components; everything here uses Astryx theme tokens so light and dark mode follow the theme. */
 :root {
-  --down: light-dark(#C9721F, #F09A45);   /* the accented beat */
-  --poly: light-dark(#6A4FB3, #A48BEB);   /* polyrhythm dots */
+  --down: light-dark(#6E3A0E, #F5BC78);   /* the accented beat: a deeper / lighter bronze than the normal beat */
+  --poly: light-dark(#7A4FB0, #B497E8);   /* polyrhythm dots: the drum apps' left-foot purple */
   --bar-off: var(--color-background-muted);
   --display-font: 'Figtree', var(--font-family-body, system-ui), sans-serif;
   color-scheme: light dark;
 }
-/* keep Pro Metronome's teal: override the neutral theme's black/white accent (unlayered, so it wins over the theme layer) */
+/* the cymbal bronze all five apps share: override the neutral theme's black/white accent (unlayered, so it wins over the theme layer) */
 :root, [data-astryx-theme] {
-  --color-accent: light-dark(#0A6B6B, #3DB5AA);
-  --color-accent-muted: light-dark(#CFE5E3, #1D3B39);
-  --color-on-accent: light-dark(#FFFFFF, #06201E);
+  --color-accent: light-dark(#A9611B, #D8913F);
+  --color-accent-muted: light-dark(#F2E2D0, #3A2A17);
+  --color-on-accent: light-dark(#FFFFFF, #1A1206);
 }
 html, body { background: var(--color-background-body); color: var(--color-text-primary); }
 body {
