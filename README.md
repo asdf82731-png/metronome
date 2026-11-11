@@ -39,3 +39,13 @@ npm run build      # 改完 src/ 之後重新建置，產生根目錄的檔案
 1. 把 `src/public/sw.js` 第 2 行的版本（例如 `pro-metronome-v16`）加一。
 2. `npm run build`，把 `src/` 和建置產生的檔案一起 commit。
 3. 手機重新開啟 App 一兩次就會拿到新版。
+
+### 自動檢查
+建置完、commit 之前跑一次：
+
+```bash
+npx playwright install chromium   # 第一次
+npm run check
+```
+
+在手機直向、手機橫向、平板直向、平板橫向（TCL NXTPAPER 11）各開一次，檢查：打開沒有錯誤、開始鍵完整出現在畫面上（不用捲動）、BPM 輸入 300 時三位數沒有被截斷、頁面不會左右捲動。沒通過的會列出原因。
