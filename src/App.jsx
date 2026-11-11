@@ -2,7 +2,13 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Theme} from '@astryxdesign/core/theme';
 import {neutralTheme} from '@astryxdesign/theme-neutral/built';
 import {Button} from '@astryxdesign/core/Button';
-import {ToggleButton} from '@astryxdesign/core/ToggleButton';
+import {ToggleButton, ToggleButtonGroup} from '@astryxdesign/core/ToggleButton';
+import {Card} from '@astryxdesign/core/Card';
+import {VStack} from '@astryxdesign/core/VStack';
+import {HStack} from '@astryxdesign/core/HStack';
+import {Grid} from '@astryxdesign/core/Grid';
+import {Divider} from '@astryxdesign/core/Divider';
+import {List, ListItem} from '@astryxdesign/core/List';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import {Slider} from '@astryxdesign/core/Slider';
 import {Switch} from '@astryxdesign/core/Switch';
@@ -125,7 +131,7 @@ function Metronome() {
 
   return (
     <div className="wrap">
-      <div className="stage">
+      <VStack gap={4} className="stage">
         <header className="top">
           <Heading level={1} type="display-3">Pro Metronome</Heading>
           <span className="meta">
@@ -135,7 +141,7 @@ function Metronome() {
           </span>
         </header>
 
-        <section className="panel tempo-panel" aria-label="速度">
+        <Panel className="tempo-panel" label="速度">
           <Pendulum needle={needle} />
           <div className="tempo">
             <div className="nudge">
@@ -150,9 +156,9 @@ function Metronome() {
           </div>
           <div className="marking"><Text type="large" weight="semibold">{term}</Text> <Text type="supporting">{termZh}</Text></div>
           <Slider label="速度" isLabelHidden valueDisplay="none" min={20} max={300} value={S.bpm} onChange={setBpm} />
-        </section>
+        </Panel>
 
-        <section className={'panel beatwrap' + (hit.mute ? ' muted' : '')} aria-label="拍子強弱">
+        <Panel className={'beatwrap' + (hit.mute ? ' muted' : '')} label="拍子強弱">
           <div className="beats" style={{gap: S.beats > 9 ? 3 : 6}}>
             {S.accents.map((l, i) => (
               <button key={i} type="button" className={'beat' + (hit.bi === i ? ' on' : '')} data-l={l}
@@ -173,104 +179,108 @@ function Metronome() {
               ))}
             </div>
           )}
-        </section>
+        </Panel>
 
         <div className="transport">
           <Button variant="primary" size="lg" width="100%" label={running ? '停止' : '開始'} onClick={toggle} />
           <Button size="lg" width="100%" label="TAP" onClick={tap} />
         </div>
-      </div>
+      </VStack>
 
-      <div className="side">
-        <section className="panel">
-          <div className="row">
-            <Text type="label">拍號</Text>
-            <div className="sig">
+      <VStack gap={4} className="side">
+        <Panel>
+          <Row label="拍號">
+            <HStack gap={3} vAlign="center" wrap="wrap">
               <Stepper value={S.beats} label="拍數" min={1} max={16} onChange={b => setSig(b, S.den)} />
               <Text color="secondary">/</Text>
               <SegmentedControl label="拍號分母" size="sm" value={String(S.den)} onChange={d => setSig(S.beats, Number(d))}>
                 {DENS.map(d => <SegmentedControlItem key={d} value={String(d)} label={String(d)} />)}
               </SegmentedControl>
-            </div>
-            <div className="chips">
-              {PRESETS.map(([b, d]) => (
-                <ToggleButton key={b + '/' + d} size="sm" label={`${b}/${d}`} isPressed={S.beats === b && S.den === d}
-                  onPressedChange={() => setSig(b, d)} />
-              ))}
-            </div>
-          </div>
-
-          <div className="row">
-            <Text type="label">細分節奏</Text>
-            <div className="pats">
-              {PATS.map(p => (
-                <button key={p.k} type="button" className="pat" aria-pressed={p.k === S.pat} aria-label={p.n} onClick={() => update({pat: p.k})}>
-                  <Notation steps={p.s} label={p.n} />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="row">
-            <Text type="label">音色</Text>
-            <div className="chips">
-              {KIT_ORDER.map(k => (
-                <ToggleButton key={k} size="sm" label={KITS[k].n} isPressed={S.kit === k}
-                  onPressedChange={() => { sRef.current = {...sRef.current, kit: k}; update({kit: k}); engine.preview(); }} />
-              ))}
-            </div>
-          </div>
-
-          <div className="row">
+            </HStack>
+            <ToggleButtonGroup type="single" label="常用拍號" size="sm" className="chips"
+              value={PRESETS.some(([b, d]) => S.beats === b && S.den === d) ? `${S.beats}/${S.den}` : ''}
+              onChange={v => { if (v) { const [b, d] = v.split('/').map(Number); setSig(b, d); } }}>
+              {PRESETS.map(([b, d]) => <ToggleButton key={b + '/' + d} value={`${b}/${d}`} label={`${b}/${d}`} />)}
+            </ToggleButtonGroup>
+          </Row>
+          <Divider />
+          <Row label="細分節奏">
+            <ToggleButtonGroup type="single" label="細分節奏" className="pats" value={S.pat} onChange={v => v && update({pat: v})}>
+              {PATS.map(p => <ToggleButton key={p.k} value={p.k} label={p.n} tooltip={p.n}><Notation steps={p.s} label={p.n} /></ToggleButton>)}
+            </ToggleButtonGroup>
+          </Row>
+          <Divider />
+          <Row label="音色">
+            <ToggleButtonGroup type="single" label="音色" size="sm" className="chips" value={S.kit}
+              onChange={k => { if (!k) return; sRef.current = {...sRef.current, kit: k}; update({kit: k}); engine.preview(); }}>
+              {KIT_ORDER.map(k => <ToggleButton key={k} value={k} label={KITS[k].n} />)}
+            </ToggleButtonGroup>
+          </Row>
+          <Divider />
+          <Row>
             <Slider label="音量" valueDisplay="text" formatValue={v => v + '%'} min={0} max={100} value={S.vol}
               onChange={v => { sRef.current = {...sRef.current, vol: v}; update({vol: v}); }} />
-          </div>
-        </section>
+          </Row>
+        </Panel>
 
-        <section className="panel">
+        <Panel>
           <Switch label="複節奏 Polyrhythm" description="在每小節內平均疊上另一組拍點" labelPosition="start" labelSpacing="spread"
             width="100%" value={S.poly} onChange={v => update({poly: v})} />
           {S.poly && (
-            <div className="body ratio">
+            <HStack gap={4} vAlign="center" wrap="wrap">
               <Stepper value={S.polyN} label="複節奏點數" min={2} max={16} onChange={n => update({polyN: n})} />
               <b className="ratio-out">{S.polyN} : {S.beats}</b>
-            </div>
+            </HStack>
           )}
-        </section>
+        </Panel>
 
-        <section className="panel">
+        <Panel>
           <Switch label="速度訓練" description="每隔幾小節自動加速，直到目標速度" labelPosition="start" labelSpacing="spread"
             width="100%" value={S.trainer} onChange={v => update({trainer: v})} />
           {S.trainer && (
-            <div className="body">
-              <div className="grid4">
+            <VStack gap={3}>
+              <Grid columns={{minWidth: 110, max: 4}} gap={2}>
                 <Num k="tStart" label="起始 BPM" S={S} update={update} />
                 <Num k="tTarget" label="目標 BPM" S={S} update={update} />
                 <Num k="tBars" label="每幾小節" S={S} update={update} />
                 <Num k="tStep" label="每次加" S={S} update={update} />
-              </div>
+              </Grid>
               <ProgressBar label="目前速度" isLabelHidden max={100}
                 value={S.tTarget > S.tStart ? clamp((S.bpm - S.tStart) / (S.tTarget - S.tStart), 0, 1) * 100 : 0} />
-            </div>
+            </VStack>
           )}
-        </section>
+        </Panel>
 
-        <section className="panel">
+        <Panel>
           <Switch label="靜音訓練" description="響幾小節、靜幾小節，檢查自己的內在節奏" labelPosition="start" labelSpacing="spread"
             width="100%" value={S.gap} onChange={v => update({gap: v})} />
           {S.gap && (
-            <div className="body grid2">
+            <Grid columns={2} gap={2}>
               <Num k="gPlay" label="發聲小節" S={S} update={update} />
               <Num k="gMute" label="靜音小節" S={S} update={update} />
-            </div>
+            </Grid>
           )}
-        </section>
+        </Panel>
 
         <SavedSets S={S} saved={saved} setSaved={setSaved}
           onLoad={p => setS(s => normalize({...p.s, vol: s.vol}))} onBpm={setBpm} />
-      </div>
+      </VStack>
     </div>
   );
+}
+
+// A settings card: an Astryx Card whose contents stack with Astryx spacing.
+function Panel({children, className = '', label}) {
+  return (
+    <section aria-label={label} className={('panel-wrap ' + className).trim()}>
+      <Card className="panel"><VStack gap={3} className="panel-body">{children}</VStack></Card>
+    </section>
+  );
+}
+
+// One setting inside a card: its label above the control.
+function Row({label, children}) {
+  return <VStack gap={2}>{label && <Text type="label">{label}</Text>}{children}</VStack>;
 }
 
 function Pendulum({needle}) {
@@ -361,7 +371,7 @@ function SavedSets({S, saved, setSaved, onLoad, onBpm}) {
   };
 
   return (
-    <section className="panel">
+    <Panel>
       <Heading level={3}>我的設定</Heading>
       <Text type="supporting" as="p">儲存速度、拍號、重音、細分等組合，一鍵切換。按「調整」可以改名、改速度、更新或調整順序</Text>
       <form className="saverow" onSubmit={e => { e.preventDefault(); save(); }}>
@@ -370,22 +380,21 @@ function SavedSets({S, saved, setSaved, onLoad, onBpm}) {
         <Button type="submit" label="儲存" />
       </form>
       {!saved.length && <Text type="supporting" as="p">還沒有儲存的設定。調好之後輸入名稱按「儲存」。</Text>}
-      <div className="plist">
+      {!!saved.length && <List hasDividers edge="flush">
         {saved.map((p, i) => (
-          <div key={p.name + i} className={'pwrap' + (i === curIdx ? ' cur' : '')}>
-            <div className="pitem">
-              <button type="button" className="load" onClick={() => { onLoad(p); setCurIdx(i); }}>
-                <Text maxLines={1}>{p.name}</Text>
-                <span className="meta">
-                  <Text type="supporting" hasTabularNumbers>{p.s.bpm} · {p.s.beats}/{p.s.den}</Text>
-                  <Notation steps={patOf(p.s.pat).s} label={patOf(p.s.pat).n} />
-                </span>
-              </button>
-              <Button size="sm" variant="ghost" label={i === editIdx ? '完成' : '調整'}
-                onClick={() => setEditIdx(i === editIdx ? -1 : i)} />
-            </div>
-            {i === editIdx && (
-              <div className="pedit">
+          <ListItem key={p.name + i} itemKey={p.name + i} isSelected={i === curIdx} onClick={() => { onLoad(p); setCurIdx(i); }}
+            label={p.name}
+            description={<span className="meta">
+              <Text type="supporting" hasTabularNumbers>{p.s.bpm} BPM · {p.s.beats}/{p.s.den}</Text>
+              <Notation steps={patOf(p.s.pat).s} label={patOf(p.s.pat).n} />
+            </span>}
+            endContent={<Button size="sm" variant={i === editIdx ? 'primary' : 'ghost'} label={i === editIdx ? '完成' : '調整'}
+              onClick={() => setEditIdx(i === editIdx ? -1 : i)} />} />
+        ))}
+      </List>}
+      {saved.map((p, i) => i === editIdx && (
+              <VStack key={'edit' + i} gap={2} className="pedit" as="section" aria-label={`調整「${p.name}」`}>
+                <Text type="label">調整「{p.name}」</Text>
                 <div className="erow">
                   <SetName p={p} taken={v => saved.some((q, j) => j !== i && q.name === v)} onRename={v => patchAt(i, q => ({...q, name: v}))} />
                   <NumberInput label="BPM" size="sm" isIntegerOnly min={20} max={300} value={p.s.bpm}
@@ -395,21 +404,18 @@ function SavedSets({S, saved, setSaved, onLoad, onBpm}) {
                       if (i === curIdx) onBpm(b);
                     }} />
                 </div>
-                <div className="eacts">
+                <HStack gap={1.5} wrap="wrap">
                   <Button size="sm" label="用目前設定更新" onClick={() => { patchAt(i, q => ({...q, s: snapshot()})); setCurIdx(i); }} />
                   <Button size="sm" label="↑" tooltip="往上移" isDisabled={i === 0} onClick={() => move(i, -1)} />
                   <Button size="sm" label="↓" tooltip="往下移" isDisabled={i === saved.length - 1} onClick={() => move(i, 1)} />
                   <Button size="sm" variant="destructive" label="刪除" onClick={() => setConfirmDel(i)} />
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+                </HStack>
+              </VStack>
+      ))}
       <AlertDialog isOpen={confirmDel >= 0} onOpenChange={o => { if (!o) setConfirmDel(-1); }}
         title={`刪除「${saved[confirmDel]?.name ?? ''}」？`} description="刪除後沒辦法復原。"
         actionLabel="刪除" cancelLabel="取消" onAction={() => remove(confirmDel)} />
-    </section>
+    </Panel>
   );
 }
 
