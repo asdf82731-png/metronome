@@ -18,6 +18,8 @@ import {ProgressBar} from '@astryxdesign/core/ProgressBar';
 import {AlertDialog} from '@astryxdesign/core/AlertDialog';
 import {Heading} from '@astryxdesign/core/Heading';
 import {Text} from '@astryxdesign/core/Text';
+import {Icon} from '@astryxdesign/core/Icon';
+import {Pause, Play} from 'lucide-react';
 import {createEngine} from './engine.js';
 import Notation from './Notation.jsx';
 import {
@@ -182,7 +184,8 @@ function Metronome() {
         </Panel>
 
         <div className="transport">
-          <Button variant="primary" size="lg" width="100%" label={running ? '停止' : '開始'} onClick={toggle} />
+          <Button variant="primary" size="lg" width="100%" label={running ? '停止' : '開始'} onClick={toggle}
+            icon={<Icon icon={running ? Pause : Play} size="lg" />} />
           <Button size="lg" width="100%" label="TAP" onClick={tap} />
         </div>
       </VStack>
