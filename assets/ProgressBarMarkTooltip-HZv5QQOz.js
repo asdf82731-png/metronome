@@ -1,1 +1,0 @@
-import{Tooltip as t}from"./Tooltip-CMLMQGte.js";import{j as e}from"./index-kECewO7d.js";function i({content:o,children:r}){return e.jsx(t,{content:o,placement:"above",focusTrigger:"always",children:r})}export{i as default};
