@@ -3,7 +3,8 @@
 :root {
   --down: light-dark(#6E3A0E, #F5BC78);   /* the accented beat: a deeper / lighter bronze than the normal beat */
   --poly: light-dark(#7A4FB0, #B497E8);   /* polyrhythm dots: the drum apps' left-foot purple */
-  --bar-off: var(--color-background-muted);
+  /* empty beat bars and polyrhythm dots: a mix of the text colour, so they stand out from the card in both themes */
+  --bar-off: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
   --display-font: 'Figtree', var(--font-family-body, system-ui), sans-serif;
   color-scheme: light dark;
 }
@@ -73,8 +74,8 @@ input { user-select: text; -webkit-user-select: text; }
 .beat[data-l="0"] .bar { height: 6px; background: transparent; border: 1px dashed var(--color-border-emphasized, var(--color-border)); }
 .beat.on .bar { background: var(--color-accent); } .beat.on[data-l="3"] .bar { background: var(--down); }
 .pips { display: flex; gap: 2px; justify-content: center; height: 6px; }
-.pip { width: 6px; height: 6px; border-radius: 50%; background: var(--color-border-emphasized, var(--color-border)); }
-.pip.rest { background: transparent; border: 1px solid var(--color-border); }
+.pip { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--color-text-primary) 40%, transparent); }
+.pip.rest { background: transparent; border: 1px solid color-mix(in srgb, var(--color-text-primary) 40%, transparent); }
 .pip.on { background: var(--color-accent); }
 .num { font-size: 11px; color: var(--color-text-secondary); text-align: center; font-variant-numeric: tabular-nums; }
 .polyrow { position: relative; height: 18px; border-top: 1px dashed var(--color-border); }

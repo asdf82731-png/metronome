@@ -73,6 +73,22 @@ function Metronome() {
 
   const update = useCallback(patch => setS(s => ({...s, ...(typeof patch === 'function' ? patch(s) : patch)})), []);
   const setBpm = useCallback(v => update({bpm: clamp(Math.round(v), 20, 300)}), [update]);
+  // −5 −1 +1 +5: a tap moves that much; holding repeats it after half a second. Keyboard activation moves once.
+  const holdTimer = useRef(null), byPointer = useRef(false);
+  const stopHold = () => { clearTimeout(holdTimer.current); clearInterval(holdTimer.current); holdTimer.current = null; };
+  useEffect(() => stopHold, []);
+  const hold = d => ({
+    onPointerDown: e => {
+      if (e.button !== 0) return;
+      byPointer.current = true;
+      stopHold();
+      setBpm(sRef.current.bpm + d);
+      holdTimer.current = setTimeout(() => { holdTimer.current = setInterval(() => setBpm(sRef.current.bpm + d), 120); }, 450);
+    },
+    onPointerUp: stopHold, onPointerLeave: stopHold, onPointerCancel: stopHold,
+    onContextMenu: e => e.preventDefault(),
+    onClick: () => { if (byPointer.current) { byPointer.current = false; return; } setBpm(sRef.current.bpm + d); },
+  });
 
   const engine = useMemo(() => createEngine({
     getSettings: () => sRef.current,
@@ -147,13 +163,13 @@ function Metronome() {
           <Pendulum needle={needle} />
           <div className="tempo">
             <div className="nudge">
-              <Button label="−5" onClick={() => setBpm(S.bpm - 5)} />
-              <Button label="−1" onClick={() => setBpm(S.bpm - 1)} />
+              <Button label="−5" {...hold(-5)} />
+              <Button label="−1" {...hold(-1)} />
             </div>
             <BpmInput bpm={S.bpm} onCommit={setBpm} />
             <div className="nudge">
-              <Button label="+5" onClick={() => setBpm(S.bpm + 5)} />
-              <Button label="+1" onClick={() => setBpm(S.bpm + 1)} />
+              <Button label="+5" {...hold(5)} />
+              <Button label="+1" {...hold(1)} />
             </div>
           </div>
           <div className="marking"><Text type="large" weight="semibold">{term}</Text> <Text type="supporting">{termZh}</Text></div>
