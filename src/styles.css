@@ -25,7 +25,8 @@ input { user-select: text; -webkit-user-select: text; }
 .wrap { max-width: 540px; margin: 0 auto; display: grid; gap: 14px; }
 .stage, .side { display: grid; gap: 14px; align-content: start; min-width: 0; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.top h1 { font-size: 24px; letter-spacing: .02em; }
+/* the page title: the same size and weight as the four drum apps */
+.top h1 { font-size: 28px; letter-spacing: .01em; }
 /* settings and stage cards are Astryx Cards (see Panel in App.jsx). They keep the surface colour: in dark mode the
    card colour equals the page and the empty beat bars, and the bars would disappear. */
 .panel-wrap, .panel { min-width: 0; }
@@ -82,6 +83,7 @@ input { user-select: text; -webkit-user-select: text; }
 
 .transport { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
 .transport button { height: 64px; font-size: 22px; letter-spacing: .08em; }
+.transport svg { fill: currentColor; }
 
 /* settings: preset and sound chips wrap onto more lines */
 .chips { flex-wrap: wrap; gap: var(--spacing-1-5); }
