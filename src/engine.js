@@ -177,7 +177,7 @@ export function createEngine({getSettings, onBeat, onPoly, onBpm, onStop}) {
         if (running && ctx.state !== 'running') { ctx.close().catch(() => {}); ctx = null; ensureCtx(); kick(); }
       }, 600);
     }
-    try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => { wake = w; }).catch(() => {}); } catch {}
+    keepAwake();
     raf = requestAnimationFrame(draw);
   }
   function stop() {
@@ -190,13 +190,26 @@ export function createEngine({getSettings, onBeat, onPoly, onBpm, onStop}) {
     onStop();
   }
 
+  // Keep the screen on while running. The system drops the lock when the app is hidden; a release clears `wake`
+  // so coming back asks again, and a lock that arrives after 停止 is let go at once.
+  function keepAwake() {
+    if (wake || !navigator.wakeLock) return;
+    try {
+      navigator.wakeLock.request('screen').then(w => {
+        if (!running) { w.release(); return; }
+        wake = w;
+        w.addEventListener('release', () => { if (wake === w) wake = null; });
+      }).catch(() => {});
+    } catch {}
+  }
+
   function onVisible() {
     if (document.visibilityState !== 'visible') return;
     if (ctx && ctx.state !== 'running') {
       try { ctx.resume(); } catch {}
       if (running) setTimeout(() => { if (ctx.state === 'running') { nextTime = ctx.currentTime + 0.06; queue = []; } }, 50);
     }
-    if (running && navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(w => { wake = w; }).catch(() => {});
+    if (running) keepAwake();
   }
   document.addEventListener('visibilitychange', onVisible);
   /* unlock audio on the very first touch anywhere */
