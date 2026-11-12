@@ -14,7 +14,8 @@
     "@stylexjs/stylex": "^0.19.1",
     "lucide-react": "1.71.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "worker-timers": "8.0.34"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.0",

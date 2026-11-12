@@ -3,6 +3,7 @@
 // through the callbacks so the UI can light the beat that is sounding right now.
 import {KITS, clamp, patOf} from './music.js';
 import {VOX} from './vox.js';
+import {setInterval, clearInterval} from './timer.js';
 
 const LVLGAIN = {3: 0.8, s: 0.8, p: 0.6};
 const BOOST = 1, HOLD = 0.025;
